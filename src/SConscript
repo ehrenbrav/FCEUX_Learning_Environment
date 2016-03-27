@@ -2,6 +2,9 @@ import glob
 file_list = glob.glob('*.cpp')
 file_list.remove('lua-engine.cpp') # use logic below for this
 
+# Add the NES interface header...
+file_list.append('nes_interface.hpp')
+
 subdirs = Split("""
 boards
 drivers/common
