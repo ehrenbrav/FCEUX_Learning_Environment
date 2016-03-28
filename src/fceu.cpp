@@ -776,8 +776,6 @@ void ResetNES(void) {
 	// clear back baffer
 	extern uint8 *XBackBuf;
 	memset(XBackBuf, 0, 256 * 256);
-
-	FCEU_DispMessage("Reset", 0);
 }
 
 void FCEU_MemoryRand(uint8 *ptr, uint32 size) {
