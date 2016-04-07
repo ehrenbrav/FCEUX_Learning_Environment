@@ -125,6 +125,9 @@ bool NESInterface::Impl::game_over() {
 
 	// Return true only if this byte is 1.
 	if (game_state == 1) return false;
+
+	// Reset the score.
+	current_game_score = 0;
 	return true;
 }
 
@@ -430,14 +433,6 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
 
     // Update the emu core with the config options.
 	UpdateEMUCore(g_config);
-
-	/*
-	// Set up the GUI.
-	gtk_init(&argc, &argv);
-	InitGTKSubsystem(argc, argv);
-	while(gtk_events_pending())
-		gtk_main_iteration_do(FALSE);
-		*/
 
 	// load the specified game.
 	error = LoadGame(argv[romIndex]);
