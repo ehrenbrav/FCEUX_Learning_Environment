@@ -357,18 +357,20 @@ reward_t NESInterface::Impl::act(Action action) {
 	FCEUD_Update(gfx, sound, ssize);
 
 	// Get score...
-	int new_score = (FCEU_CheatGetByte(0x07d7) * 1000000) +
-			(FCEU_CheatGetByte(0x07d8) * 100000) +
-			(FCEU_CheatGetByte(0x07d9) * 10000) +
-			(FCEU_CheatGetByte(0x07da) * 1000) +
-			(FCEU_CheatGetByte(0x07db) * 100) +
-			(FCEU_CheatGetByte(0x07dc) * 10);
-
-	// DEBUG
-	printf("New score: %i\n", new_score);
+	int new_score = (FCEU_CheatGetByte(0x07dd) * 1000000) +
+			(FCEU_CheatGetByte(0x07de) * 100000) +
+			(FCEU_CheatGetByte(0x07df) * 10000) +
+			(FCEU_CheatGetByte(0x07e0) * 1000) +
+			(FCEU_CheatGetByte(0x07e1) * 100) +
+			(FCEU_CheatGetByte(0x07e2) * 10);
 
 	// Calculate the reward.
 	reward_t reward = new_score - current_game_score;
+
+        // Handle negatives.
+        if (reward < 0) {
+                reward = 0;
+        }
 	current_game_score = new_score;
 
 	return reward;
