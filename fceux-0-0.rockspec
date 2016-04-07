@@ -6,7 +6,7 @@ source = {
 }
 
 description = {
-  summary = "FECUX"
+  summary = "FECUX_Learning_Environment"
 }
 
 build = {
