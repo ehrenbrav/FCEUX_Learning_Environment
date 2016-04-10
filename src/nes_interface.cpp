@@ -77,6 +77,9 @@ class NESInterface::Impl {
         // Return screen width.
         const int getScreenWidth() const;
 
+        // Returns the current score.
+        const int getCurrentScore() const;
+
         // Saves the state of the system
         void saveState();
 
@@ -262,6 +265,10 @@ reward_t NESInterface::Impl::maxReward() const {
 
 int NESInterface::Impl::lives() const {
 	return remaining_lives;
+}
+
+const int NESInterface::Impl::getCurrentScore() const {
+	return current_game_score;
 }
 
 
@@ -541,6 +548,10 @@ reward_t NESInterface::maxReward() const {
 
 int NESInterface::lives() const {
     return m_pimpl->lives();
+}
+
+const int NESInterface::getCurrentScore() const {
+	return m_pimpl->getCurrentScore();
 }
 
 

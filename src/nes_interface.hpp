@@ -111,6 +111,9 @@ class NESInterface {
         const int getScreenHeight() const;
         const int getScreenWidth() const;
 
+        /** Returns the score. */
+        const int getCurrentScore() const;
+
         /** Saves the state of the emulator system, overwriting any 
             previously saved state. */
         void saveState();
