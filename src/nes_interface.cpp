@@ -99,6 +99,7 @@ class NESInterface::Impl {
         int m_max_num_frames;     // Maximum number of frames for each episode
         int nes_input; // Input to the emulator.
         int current_game_score;
+        int current_x;
         int remaining_lives;
         int game_state;
         int episode_frame_number;
@@ -129,8 +130,9 @@ bool NESInterface::Impl::game_over() {
 	// Return true only if this byte is 1.
 	if (game_state == 1) return false;
 
-	// Reset the score.
+	// Reset the score and position.
 	current_game_score = 0;
+	current_x = 0;
 	return true;
 }
 
@@ -140,8 +142,9 @@ void NESInterface::Impl::reset_game() {
 	// Pretty simple...
 	ResetNES();
 
-	// Initialize the score and frame counter.
+	// Initialize the score,position, and frame counter.
 	current_game_score = 0;
+	current_x = 0;
 	episode_frame_number = 0;
 
 	// Run a few frames first to get to the startup screen.
@@ -371,14 +374,29 @@ reward_t NESInterface::Impl::act(Action action) {
 			(FCEU_CheatGetByte(0x07e1) * 100) +
 			(FCEU_CheatGetByte(0x07e2) * 10);
 
-	// Calculate the reward.
+	// Calculate the change in x (this is the x position on the screen, not in the level).
+	int new_x = FCEU_CheatGetByte(0x0086);
+	int deltaX = new_x - current_x;
+
+	// Handle resets of level, etc.
+	if (abs(deltaX) > MAX_ALLOWED_X_CHANGE) {
+		deltaX = 0;
+		current_x = 0;
+	} else {
+		current_x = new_x;
+	}
+
+	// Calculate the reward based on score.
 	reward_t reward = new_score - current_game_score;
 
-        // Handle negatives.
-        if (reward < 0) {
-                reward = 0;
-        }
+	// Handle negative scores.
+	if (reward < 0) {
+			reward = 0;
+	}
 	current_game_score = new_score;
+
+	// Add reward based on position.
+	reward = reward + deltaX;
 
 	return reward;
 }
@@ -388,6 +406,7 @@ NESInterface::Impl::Impl(const std::string &rom_file) :
     m_display_active(false),
 	nes_input(0),
 	current_game_score(0),
+	current_x(0),
 	remaining_lives(0),
 	game_state(0),
 	episode_frame_number(0)
