@@ -377,6 +377,7 @@ reward_t NESInterface::Impl::act(Action action) {
 	// Calculate the change in x (this is the x position on the screen, not in the level).
 	int new_x = FCEU_CheatGetByte(0x0086);
 	int deltaX = new_x - current_x;
+	deltaX = deltaX * 5;
 
 	// Handle resets of level, etc.
 	if (abs(deltaX) > MAX_ALLOWED_X_CHANGE) {
