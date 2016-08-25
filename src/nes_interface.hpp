@@ -13,7 +13,7 @@ namespace nes {
 #define NES_SCREEN_WIDTH 256
 
 // Number of normal game actions we want to test.
-#define NUM_NES_LEGAL_ACTIONS 7
+#define NUM_NES_LEGAL_ACTIONS 15
 
 // The amount of change in the position above which we disregard.
 #define MAX_ALLOWED_X_CHANGE 100

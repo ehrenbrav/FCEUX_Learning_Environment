@@ -235,8 +235,6 @@ ActionVect NESInterface::Impl::getLegalActionSet() {
 	legal_actions.push_back((Action) RIGHT);
 	legal_actions.push_back((Action) LEFT);
 	legal_actions.push_back((Action) DOWN);
-
-	/*
 	legal_actions.push_back((Action) A_UP);
 	legal_actions.push_back((Action) A_RIGHT);
 	legal_actions.push_back((Action) A_LEFT);
@@ -245,7 +243,6 @@ ActionVect NESInterface::Impl::getLegalActionSet() {
 	legal_actions.push_back((Action) B_RIGHT);
 	legal_actions.push_back((Action) B_LEFT);
 	legal_actions.push_back((Action) B_DOWN);
-	*/
 
 	return legal_actions;
 }
