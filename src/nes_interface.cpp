@@ -18,12 +18,11 @@ namespace nes {
 // Return the RGB value of a given pixel we got from XBuf.
 void NESInterface::getRGB(
     unsigned char pixel,
-    unsigned char &red,
-    unsigned char &green,
-    unsigned char &blue) {
-	FCEUD_GetPalette(pixel, &red, &green, &blue);
+    unsigned char *red,
+    unsigned char *green,
+    unsigned char *blue) {
+	FCEUD_GetPalette(pixel, red, green, blue);
 }
-
 
 class NESInterface::Impl {
 
@@ -42,19 +41,19 @@ class NESInterface::Impl {
         // Applies an action to the game and returns the reward. It is the user's responsibility
         // to check if the game has ended and reset when necessary - this method will keep pressing
         // buttons on the game over screen.
-        reward_t act(Action action);
+        int act(int action);
 
         // Returns the number of legal actions.
         int getNumLegalActions();
 
         // Returns the vector of legal actions.
-        ActionVect getLegalActionSet();
+        void getLegalActionSet(int legal_actions[]);
 
         // Minimum possible instantaneous reward.
-        reward_t minReward() const;
+        int minReward() const;
 
         // Maximum possible instantaneous reward.
-        reward_t maxReward() const;
+        int maxReward() const;
 
         // The remaining number of lives.
         int lives() const;
@@ -69,7 +68,7 @@ class NESInterface::Impl {
         void setMaxNumFrames(int newMax);
 
         // Returns the current game screen
-        const uint8_t *getScreen() const;
+        void getScreen(unsigned char *screen, int screen_size);
 
         // Return screen height.
         const int getScreenHeight() const;
@@ -90,11 +89,14 @@ class NESInterface::Impl {
         std::string getSnapshot() const;
 
         // restores state from a string
-        void restoreSnapshot(const std::string& snapshot);
+        void restoreSnapshot(const std::string snapshot);
+
+        // Get the RGB data from the raw screen.
+        void fillRGBfromPalette(unsigned char *raw_screen, unsigned char *rgb_screen, int raw_screen_size);
 
     private:
 
-        reward_t m_episode_score; // Score accumulated throughout the course of an episode
+        int m_episode_score; // Score accumulated throughout the course of an episode
         bool m_display_active;    // Should the screen be displayed or not
         int m_max_num_frames;     // Maximum number of frames for each episode
         int nes_input; // Input to the emulator.
@@ -121,7 +123,6 @@ bool NESInterface::Impl::loadState() {
 	return false;
 }
 
-
 bool NESInterface::Impl::game_over() {
 
 	// Update game state.
@@ -136,7 +137,6 @@ bool NESInterface::Impl::game_over() {
 	return true;
 }
 
-
 void NESInterface::Impl::reset_game() {
 
 	// Pretty simple...
@@ -149,27 +149,26 @@ void NESInterface::Impl::reset_game() {
 
 	// Run a few frames first to get to the startup screen.
 	for (int i = 0; i<60; i++) {
-		NESInterface::Impl::act((Action) NOOP);
+		NESInterface::Impl::act(ACT_NOOP);
 	}
 
 	// Hit the start button...
 	for (int i = 0; i<10; i++) {
-		NESInterface::Impl::act((Action) SELECT);
+		NESInterface::Impl::act(ACT_SELECT);
 	}
 }
-
 
 void NESInterface::Impl::saveState() {
 
 	// TODO implement
-	printf("NOT IMPLEMENTED.\n");
+	printf("saveState NOT IMPLEMENTED.\n");
 	//		FCEUD_SaveStateAs ();
 }
 
 std::string NESInterface::Impl::getSnapshot() const {
 
 	// TODO implement
-	printf("NOT IMPLEMENTED.\n");
+	printf("getSnapshot NOT IMPLEMENTED.\n");
 	/*
     const ALEState* state = m_emu->environment->cloneState();
     std::string snapshot = state->getStateAsString();
@@ -179,16 +178,16 @@ std::string NESInterface::Impl::getSnapshot() const {
 	return "";
 }
 
-void NESInterface::Impl::restoreSnapshot(const std::string &snapshot) {
+void NESInterface::Impl::restoreSnapshot(const std::string snapshot) {
 
 	// TODO implement
-	printf("NOT IMPLEMENTED.\n");
+	printf("restoreSnapshot NOT IMPLEMENTED.\n");
     //ALEState state(snapshot);
     //m_emu->environment->restoreState(state);
 }
 
-const uint8_t *NESInterface::Impl::getScreen() const {
-	return XBuf;
+void NESInterface::Impl::getScreen(unsigned char *screen, int screen_size) {
+        memcpy(screen, XBuf, screen_size);
 }
 
 const int NESInterface::Impl::getScreenHeight() const {
@@ -199,21 +198,32 @@ const int NESInterface::Impl::getScreenWidth() const {
 	return NES_SCREEN_WIDTH;
 }
 
+void NESInterface::Impl::fillRGBfromPalette(unsigned char *raw_screen, unsigned char *rgb_screen, int raw_screen_size) {
+
+        unsigned long i;
+        for (i = 0; i<raw_screen_size; i++) {
+                unsigned char r, g, b;
+                NESInterface::getRGB(raw_screen[i], &r, &g, &b);
+
+                // Man, this bastard took a long time to figure out!
+                rgb_screen[3*i] = b;
+                rgb_screen[(3*i)+1] = g;
+                rgb_screen[(3*i)+2] = r;
+        }
+}
 
 void NESInterface::Impl::setMaxNumFrames(int newMax) {
     m_max_num_frames = newMax;
 }
 
-
 int NESInterface::Impl::getEpisodeFrameNumber() const {
 	return episode_frame_number;
 }
 
-
 int NESInterface::Impl::getFrameNumber() const {
 
 	// TODO implement
-	printf("NOT IMPLEMENTED.\n");
+	printf("getFrameNumber NOT IMPLEMENTED.\n");
     //return m_emu->environment->getFrameNumber();
 	return 0;
 }
@@ -222,49 +232,41 @@ int NESInterface::Impl::getNumLegalActions() {
 	return NUM_NES_LEGAL_ACTIONS;
 }
 
-ActionVect NESInterface::Impl::getLegalActionSet() {
+void NESInterface::Impl::getLegalActionSet(int legal_actions[]) {
     
-	// Since we're only working with Super Mario Bros. here...
-	ActionVect legal_actions;
-
 	// All the things you can do in SMB...
-	legal_actions.push_back((Action) NOOP);
-	legal_actions.push_back((Action) A);
-	legal_actions.push_back((Action) B);
-	legal_actions.push_back((Action) UP);
-	legal_actions.push_back((Action) RIGHT);
-	legal_actions.push_back((Action) LEFT);
-	legal_actions.push_back((Action) DOWN);
-	legal_actions.push_back((Action) A_UP);
-	legal_actions.push_back((Action) A_RIGHT);
-	legal_actions.push_back((Action) A_LEFT);
-	legal_actions.push_back((Action) A_DOWN);
-	legal_actions.push_back((Action) B_UP);
-	legal_actions.push_back((Action) B_RIGHT);
-	legal_actions.push_back((Action) B_LEFT);
-	legal_actions.push_back((Action) B_DOWN);
-
-	return legal_actions;
+	legal_actions[0] = ACT_NOOP;
+	legal_actions[1] = ACT_A;
+	legal_actions[2] = ACT_B;
+	legal_actions[3] = ACT_UP;
+	legal_actions[4] = ACT_RIGHT;
+	legal_actions[5] = ACT_LEFT;
+	legal_actions[6] = ACT_DOWN;
+	legal_actions[7] = ACT_A_UP;
+	legal_actions[8] = ACT_A_RIGHT;
+	legal_actions[9] = ACT_A_LEFT;
+	legal_actions[10] = ACT_A_DOWN;
+	legal_actions[11] = ACT_B_UP;
+	legal_actions[12] = ACT_B_RIGHT;
+	legal_actions[13] = ACT_B_LEFT;
+	legal_actions[14] = ACT_B_DOWN;
 }
 
-
-reward_t NESInterface::Impl::minReward() const {
+int NESInterface::Impl::minReward() const {
 
 	// TODO implement.
-	printf("NOT IMPLEMENTED.\n");
+	printf("minReward NOT IMPLEMENTED.\n");
     //return m_rom_settings->minReward();
 	return 0;
 }
 
-
-reward_t NESInterface::Impl::maxReward() const {
+int NESInterface::Impl::maxReward() const {
 
 	// TODO implement.
-	printf("NOT IMPLEMENTED.\n");
+	printf("maxReward NOT IMPLEMENTED.\n");
     //return m_rom_settings->maxReward();
 	return 0;
 }
-
 
 int NESInterface::Impl::lives() const {
 	return remaining_lives;
@@ -274,8 +276,7 @@ const int NESInterface::Impl::getCurrentScore() const {
 	return current_game_score;
 }
 
-
-reward_t NESInterface::Impl::act(Action action) {
+int NESInterface::Impl::act(int action) {
 
 	// Calculate lives.
 	remaining_lives = FCEU_CheatGetByte(0x075a);
@@ -286,67 +287,67 @@ reward_t NESInterface::Impl::act(Action action) {
 	// Set the action. No idea whether this will work with other input configurations!
 	switch (action) {
 
-		case (Action) NOOP:
+		case ACT_NOOP:
 			nes_input = 0;
 			break;
 
-		case (Action) A:
+		case ACT_A:
 			nes_input = 1;
 			break;
 
-		case (Action) B:
+		case ACT_B:
 			nes_input = 2;
 			break;
 
-		case (Action) UP:
+		case ACT_UP:
 			nes_input = 16;
 			break;
 
-		case (Action) RIGHT:
+		case ACT_RIGHT:
 			nes_input = 128;
 			break;
 
-		case (Action) LEFT:
+		case ACT_LEFT:
 			nes_input = 64;
 			break;
 
-		case (Action) DOWN:
+		case ACT_DOWN:
 			nes_input = 32;
 			break;
 
-		case (Action) A_UP:
+		case ACT_A_UP:
 			nes_input = 17;
 			break;
 
-		case (Action) A_RIGHT:
+		case ACT_A_RIGHT:
 			nes_input = 129;
 			break;
 
-		case (Action) A_LEFT:
+		case ACT_A_LEFT:
 			nes_input = 65;
 			break;
 
-		case (Action) A_DOWN:
+		case ACT_A_DOWN:
 			nes_input = 33;
 			break;
 
-		case (Action) B_UP:
+		case ACT_B_UP:
 			nes_input = 18;
 			break;
 
-		case (Action) B_RIGHT:
+		case ACT_B_RIGHT:
 			nes_input = 130;
 			break;
 
-		case (Action) B_LEFT:
+		case ACT_B_LEFT:
 			nes_input = 66;
 			break;
 
-		case (Action) B_DOWN:
+		case ACT_B_DOWN:
 			nes_input = 34;
 			break;
 
-		case (Action) SELECT:
+		case ACT_SELECT:
 			nes_input = 8;
 			break;
 
@@ -383,12 +384,11 @@ reward_t NESInterface::Impl::act(Action action) {
 	if (abs(deltaX) > MAX_ALLOWED_X_CHANGE) {
 		deltaX = 0;
 		current_x = 0;
-	} else {
-		current_x = new_x;
-	}
+	} 
+        current_x = new_x;
 
 	// Calculate the reward based on score.
-	reward_t reward = new_score - current_game_score;
+	int reward = new_score - current_game_score;
 
 	// Handle negative scores.
 	if (reward < 0) {
@@ -397,6 +397,7 @@ reward_t NESInterface::Impl::act(Action action) {
 	current_game_score = new_score;
 
 	// Add reward based on position.
+        // Oh wow - now sure we want to do this :(
 	reward = reward + deltaX;
 
 	return reward;
@@ -495,33 +496,28 @@ bool NESInterface::loadState() {
     return m_pimpl->loadState();
 }
 
-
 bool NESInterface::gameOver() {
     return m_pimpl->game_over();
 }
-
 
 void NESInterface::resetGame() {
     m_pimpl->reset_game();
 }
 
-
 void NESInterface::saveState() {
     m_pimpl->saveState();
 }
-
 
 std::string NESInterface::getSnapshot() const {
     return m_pimpl->getSnapshot();
 }
 
-
-void NESInterface::restoreSnapshot(const std::string& snapshot) {
+void NESInterface::restoreSnapshot(const std::string snapshot) {
     m_pimpl->restoreSnapshot(snapshot);
 }
 
-const uint8_t *NESInterface::getScreen() const {
-    return m_pimpl->getScreen();
+void NESInterface::getScreen(unsigned char *screen, int screen_size) {
+         m_pimpl->getScreen(screen, screen_size);
 }
 
 const int NESInterface::getScreenHeight() const {
@@ -532,16 +528,17 @@ const int NESInterface::getScreenWidth() const {
 	return m_pimpl->getScreenWidth();
 }
 
+void NESInterface::fillRGBfromPalette(unsigned char *raw_screen, unsigned char *rgb_screen, int raw_screen_size) {
+        m_pimpl->fillRGBfromPalette(raw_screen, rgb_screen, raw_screen_size);
+}
 
 void NESInterface::setMaxNumFrames(int newMax) {
     m_pimpl->setMaxNumFrames(newMax);
 }
 
-
 int NESInterface::getEpisodeFrameNumber() const {
     return m_pimpl->getEpisodeFrameNumber();
 }
-
 
 int NESInterface::getFrameNumber() const {
     return m_pimpl->getFrameNumber();
@@ -551,20 +548,17 @@ int NESInterface::getNumLegalActions() {
 	return m_pimpl->getNumLegalActions();
 }
 
-ActionVect NESInterface::getLegalActionSet() {
-    return m_pimpl->getLegalActionSet();
+void NESInterface::getLegalActionSet(int legal_actions[]) {
+        m_pimpl->getLegalActionSet(legal_actions);
 }
 
-
-reward_t NESInterface::minReward() const {
+int NESInterface::minReward() const {
     return m_pimpl->minReward();
 }
 
-
-reward_t NESInterface::maxReward() const {
+int NESInterface::maxReward() const {
     return m_pimpl->maxReward();
 }
-
 
 int NESInterface::lives() const {
     return m_pimpl->lives();
@@ -574,8 +568,7 @@ const int NESInterface::getCurrentScore() const {
 	return m_pimpl->getCurrentScore();
 }
 
-
-reward_t NESInterface::act(Action action) {
+int NESInterface::act(int action) {
     return m_pimpl->act(action);
 }
 

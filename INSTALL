@@ -4,3 +4,13 @@ Users of Microsoft Visual Studio can use the solution files within the vc direct
 These solution files will compile FCEUX and some included libraries for full functionality.
 
 CMake has been depreciated in favor of scons.  However, if you wish to use it you can find the old cmake build files in the ~attic.
+
+TO COMPILE:
+Execute scons
+
+TO COMPILE AND INSTALL FOR THE DEEPQNETWORK:
+<path-to-DeepQNetwork>/torch/bin/luarocks make
+
+TO INSTALL THE PYTHON INTERFACE:
+sudo pip3 install .
+

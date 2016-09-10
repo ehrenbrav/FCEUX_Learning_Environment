@@ -216,6 +216,7 @@ if env['MAKE_LIB']:
   fceux_src = 'src/fceux'
   fceux_dst = 'lib/libfceux.so'
   nes_interface = 'src/nes_interface.hpp'
+  fceux_python_interface_dst = 'nes_python_interface/libfceux.so'
 else:
   fceux_src = 'src/fceux' + exe_suffix
   fceux_dst = 'bin/fceux' + exe_suffix
@@ -235,6 +236,7 @@ if not env['MAKE_LIB']:
   env.Command(auxlib_dst, auxlib_src, [Copy(auxlib_dst, auxlib_src)])
 
 env.Command(fceux_dst, fceux_src, [Copy(fceux_dst, fceux_src)])
+env.Command(fceux_python_interface_dst, fceux_src, [Copy(fceux_python_interface_dst, fceux_src)])
 
 man_src = 'documentation/fceux.6'
 man_net_src = 'documentation/fceux-net-server.6'

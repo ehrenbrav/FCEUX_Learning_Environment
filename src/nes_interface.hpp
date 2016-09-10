@@ -19,37 +19,25 @@ namespace nes {
 #define MAX_ALLOWED_X_CHANGE 100
 
 // Define possible actions
-enum Action {
-    NOOP        		= 0, // 0
-    A           		= 1, // 1
-	B					= 2, // 2
-    UP          		= 3, // 16
-    RIGHT       		= 4, // 128
-    LEFT        		= 5, // 64
-    DOWN        		= 6, // 32
-	A_UP				= 7, // 17
-	A_RIGHT				= 8, // 129
-	A_LEFT				= 9, // 65
-	A_DOWN				= 10, // 33
-	B_UP				= 11, // 18
-	B_RIGHT				= 12, // 130
-	B_LEFT				= 13, // 66
-	B_DOWN				= 14, // 34
-    RESET       		= 15, // note: we use SYSTEM_RESET instead to reset the environment.
-    UNDEFINED   		= 16,
-    RANDOM      		= 17,
-    SAVE_STATE          = 18,
-    LOAD_STATE          = 19,
-    SYSTEM_RESET        = 20,
-    SELECT              = 21, // 8
-    LAST_ACTION_INDEX   = 22
-};
-
-// a list of NES actions
-typedef std::vector<Action> ActionVect;
-
-// type used to represent instantaneous reward
-typedef int reward_t;
+#define ACT_NOOP      0  // 0
+#define ACT_A         1  // 1
+#define ACT_B	      2  // 2
+#define ACT_UP        3  // 16
+#define ACT_RIGHT     4  // 128
+#define ACT_LEFT      5  // 64
+#define ACT_DOWN      6  // 32
+#define ACT_A_UP      7  // 17
+#define ACT_A_RIGHT   8  // 129
+#define ACT_A_LEFT    9  // 65
+#define ACT_A_DOWN    10 // 33
+#define ACT_B_UP      11 // 18
+#define ACT_B_RIGHT   12 // 130
+#define ACT_B_LEFT    13 // 66
+#define ACT_B_DOWN    14 // 34
+#define ACT_RESET     15 // note: we use SYSTEM_RESET instead to reset the environment.
+#define ACT_UNDEFINED 16
+#define ACT_RANDOM    17
+#define ACT_SELECT    18 // 8
 
 typedef unsigned char byte_t;
 typedef unsigned char pixel_t;
@@ -78,16 +66,13 @@ class NESInterface {
         /** Applies an action to the game and returns the reward. It is the user's responsibility
             to check if the game has ended and reset when necessary - this method will keep pressing
             buttons on the game over screen. */
-        reward_t act(Action action);
+        int act(int action);
 
         /** Returns the number of legal actions. */
         int getNumLegalActions();
 
         /** Returns the vector of legal actions. */
-        ActionVect getLegalActionSet();
-
-        /** Returns a vector describing the minimal set of actions needed to play current game. */
-        ActionVect getMinimalActionSet();
+        void getLegalActionSet(int legal_actions[]);
 
         /** Returns the frame number since the loading of the ROM. */
         int getFrameNumber() const;
@@ -96,10 +81,10 @@ class NESInterface {
         void setMaxNumFrames(int newMax);
 
         /** Minimum possible instantaneous reward. */
-        reward_t minReward() const;
+        int minReward() const;
 
         /** Maximum possible instantaneous reward. */
-        reward_t maxReward() const;
+        int maxReward() const;
 
         /** The remaining number of lives. */
         int lives() const;
@@ -108,7 +93,7 @@ class NESInterface {
         int getEpisodeFrameNumber() const;
 
         /** Returns a handle to the current game screen. */
-        const uint8_t *getScreen() const;
+        void getScreen(unsigned char *screen, int screen_size);
 
         /** Returns width and height. */
         const int getScreenHeight() const;
@@ -130,20 +115,18 @@ class NESInterface {
         std::string getSnapshot() const;
 
         /** Sets the state from a string*/
-        void restoreSnapshot(const std::string& snapshot);
+        void restoreSnapshot(const std::string snapshot);
         
-        /** Get the current version of the NES interface.
-            Major versions indicate significant changes that might break backward compatibility.
-            Minor versions indicate bug-fixes. */
-        void getVersion(int &major, int &minor) const;
-
         /** Converts a pixel to its RGB value. */
         static void getRGB(
             unsigned char pixel, 
-            unsigned char &red, 
-            unsigned char &green, 
-            unsigned char &blue
+            unsigned char *red, 
+            unsigned char *green, 
+            unsigned char *blue
         );
+
+        /** Get the full RGB screen from the raw pixel data. */
+        void fillRGBfromPalette(unsigned char *raw_screen, unsigned char *rgb_screen, int raw_screen_size);
 
     private:
 
@@ -160,3 +143,8 @@ class NESInterface {
 } // namespace nes
 
 #endif // __NES_INTERFACE_HPP__
+
+
+
+
+
