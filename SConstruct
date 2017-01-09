@@ -16,7 +16,7 @@ opts = Variables(None, ARGUMENTS)
 opts.AddVariables( 
   BoolVariable('DEBUG',     'Build with debugging symbols', 0),
   BoolVariable('RELEASE',   'Set to 1 to build for release', 1),
-  BoolVariable('MAKE_LIB',  'Build the shared library', 1), 
+  BoolVariable('MAKE_LIB',  'Build the shared library', 0), 
   BoolVariable('FRAMESKIP', 'Enable frameskipping', 1),
   BoolVariable('OPENGL',    'Enable OpenGL support', 1),
   BoolVariable('LUA',       'Enable Lua support', 1),
@@ -236,7 +236,9 @@ if not env['MAKE_LIB']:
   env.Command(auxlib_dst, auxlib_src, [Copy(auxlib_dst, auxlib_src)])
 
 env.Command(fceux_dst, fceux_src, [Copy(fceux_dst, fceux_src)])
-env.Command(fceux_python_interface_dst, fceux_src, [Copy(fceux_python_interface_dst, fceux_src)])
+
+if env['MAKE_LIB']:
+  env.Command(fceux_python_interface_dst, fceux_src, [Copy(fceux_python_interface_dst, fceux_src)])
 
 man_src = 'documentation/fceux.6'
 man_net_src = 'documentation/fceux-net-server.6'
